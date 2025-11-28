@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>I Love Shorts — All Videos</title>
+  <meta name="description" content="All videos from the I Love Shorts YouTube channel. Browse, search and share — auto-generated." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="alternate" type="application/rss+xml" title="Channel RSS" href="/feed.xml" />
+  <meta name="theme-color" content="#0f172a" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="/">I Love Shorts</a>
+      <div class="controls">
+        <input id="search" placeholder="Search videos by title or tags..." aria-label="Search videos" />
+        <button id="themeToggle" aria-label="Toggle theme">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="intro" class="card">
+      <h1>I Love Shorts — Videos</h1>
+      <p>Auto-generated static site listing every video from the YouTube channel. Use the search box to filter. Click a video to open its page.</p>
+    </section>
+
+    <section id="videos" class="grid"></section>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>Channel ID: <code>UCqIV4jce9V3lY4UoNObmXBA</code> · Generated static site</small>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // Basic client-side rendering and search.
+    // The generator will create `videos.json` listing all videos (used client-side for search).
+    async function loadVideos() {
+      try {
+        const res = await fetch('/videos.json');
+        const videos = await res.json();
+        renderVideos(videos);
+        setupSearch(videos);
+      } catch (e) {
+        document.getElementById('videos').innerHTML = '<p class="error">Could not load video index. Make sure the generator ran.</p>';
+      }
+    }
+
+    function renderVideos(videos) {
+      const container = document.getElementById('videos');
+      if (!videos.length) {
+        container.innerHTML = '<p>No videos found.</p>';
+        return;
+      }
+      container.innerHTML = videos.map(v => `
+        <article class="video-card">
+          <a href="${v.url}">
+            <img alt="${escapeHtml(v.title)}" loading="lazy" src="${v.thumbnail}" />
+            <div class="meta">
+              <h3>${escapeHtml(v.title)}</h3>
+              <p class="stats">${v.published_at.slice(0,10)} • ${v.duration_text || ''}</p>
+            </div>
+          </a>
+        </article>
+      `).join('');
+    }
+
+    function setupSearch(videos) {
+      const input = document.getElementById('search');
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        const filtered = videos.filter(v =>
+          v.title.toLowerCase().includes(q) ||
+          (v.tags || []).join(' ').toLowerCase().includes(q) ||
+          (v.description||'').toLowerCase().includes(q)
+        );
+        renderVideos(filtered);
+      });
+    }
+
+    // Theme toggle (light/dark)
+    const themeBtn = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    themeBtn.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+    });
+    // Restore
+    (function initTheme(){
+      const saved = localStorage.getItem('theme') || 'dark';
+      root.setAttribute('data-theme', saved);
+      themeBtn.textContent = saved === 'dark' ? '🌙' : '☀️';
+    })();
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    loadVideos();
+  </script>
+</body>
+</html>
